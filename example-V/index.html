@@ -1,0 +1,203 @@
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.8.0/d3.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.js"></script>
+
+<style>
+    #mapid {
+        height: 500px;
+        width: 800px;
+    }
+</style>
+
+<div id="mapid"></div>
+
+<script>
+    var mymap = L.map('mapid');
+    L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+        subdomains: 'abcd'
+    }).addTo(mymap);
+    mymap.scrollWheelZoom.disable();
+
+    var west_side_drive_points = [
+        [
+            40.702244436175114,
+            -74.01660919189453
+        ],
+        [
+            40.70562793820589,
+            -74.01695251464844
+        ],
+        [
+            40.71369559554873,
+            -74.01420593261717
+        ],
+        [
+            40.7246244107568,
+            -74.01180267333984
+        ],
+        [
+            40.73242960878483,
+            -74.01111602783203
+        ],
+        [
+            40.73971363429379,
+            -74.01077270507812
+        ],
+        [
+            40.743355347975395,
+            -74.0093994140625
+        ],
+        [
+            40.74829735476797,
+            -74.00802612304688
+        ],
+        [
+            40.75219867966512,
+            -74.00836944580078
+        ],
+        [
+            40.75687996739503,
+            -74.00596618652344
+        ],
+        [
+            40.762341053140275,
+            -74.00218963623047
+        ],
+        [
+            40.763901280945866,
+            -73.99944305419922
+        ],
+        [
+            40.76988181489869,
+            -73.99463653564453
+        ],
+        [
+            40.772221877329024,
+            -73.99463653564453
+        ],
+        [
+            40.78678041401646,
+            -73.98399353027344
+        ],
+        [
+            40.790159617974396,
+            -73.98262023925781
+        ],
+        [
+            40.79431840216349,
+            -73.97850036621094
+        ],
+        [
+            40.79691751000055,
+            -73.9764404296875
+        ],
+        [
+            40.801595647680344,
+            -73.97438049316406
+        ],
+        [
+            40.8161477453172,
+            -73.96442413330078
+        ],
+        [
+            40.82082452751902,
+            -73.95996093749999
+        ],
+        [
+            40.8249813904429,
+            -73.95652770996094
+        ],
+        [
+            40.83069665155928,
+            -73.95103454589844
+        ],
+        [
+            40.839268619630175,
+            -73.94828796386719
+        ],
+        [
+            40.84394377141789,
+            -73.94588470458984
+        ],
+        [
+            40.84887829610045,
+            -73.94588470458984
+        ],
+        [
+            40.85069618625578,
+            -73.9445114135742
+        ],
+        [
+            40.85303340031356,
+            -73.94210815429688
+        ],
+        [
+            40.85692857386188,
+            -73.93970489501953
+        ],
+        [
+            40.86212178233553,
+            -73.93524169921875
+        ],
+        [
+            40.87017045081341,
+            -73.93077850341797
+        ],
+        [
+            40.87406461663041,
+            -73.92871856689452
+        ],
+        [
+            40.8764010061807,
+            -73.92494201660156
+        ]
+    ];
+
+    var polyline = L.polyline(west_side_drive_points, {color: 'red', className: 'west_side_drive'}).addTo(mymap);
+    mymap.fitBounds(polyline.getBounds());
+
+    // Plot through the trip time.
+    var west_side_drive_path = d3.select(".west_side_drive");
+    var totalLength = west_side_drive_path.node().getTotalLength();  // getTotalLength is an SVG method on "path" elements
+
+    west_side_drive_path
+        .attr("stroke-dasharray", totalLength + " " + totalLength)
+        .attr("stroke-dashoffset", totalLength);
+
+    polyline.addTo(mymap);
+    mymap.fitBounds(polyline.getBounds());
+
+    const draw_steps = 100;
+    const length_step = totalLength / draw_steps;
+    var current_dash_offset = totalLength;
+
+    function handleWheel(wheelDelta) {
+        console.log("SCROLL EVENT GETS TO FIRE");
+        if (wheelDelta < 0) {
+            if (current_dash_offset > 0) {
+                current_dash_offset = current_dash_offset - length_step;
+                west_side_drive_path.transition().duration(0);
+                west_side_drive_path.transition().duration(500).attr("stroke-dashoffset", current_dash_offset)
+            }
+        } else if (wheelDelta > 0) {
+            if (current_dash_offset < totalLength) {
+                current_dash_offset = current_dash_offset + length_step;
+                west_side_drive_path.transition().duration(0);
+                west_side_drive_path.transition().duration(500).attr("stroke-dashoffset", current_dash_offset);
+            }
+        }
+    }
+
+    function handleWheelDebounced() {
+        var wheelDelta = d3.event.wheelDelta;
+        console.log("SCROLL EVENT WANTS TO FIRE");
+        return _.throttle(handleWheel, 1000)(wheelDelta);
+    }
+
+    d3.select("#mapid").on('wheel', handleWheelDebounced);
+
+//    document.addEventListener('wheel', null, {passive: true});
+
+</script>
